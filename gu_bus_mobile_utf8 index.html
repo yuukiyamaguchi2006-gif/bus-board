@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="format-detection" content="telephone=no">
+<title>岐阜大学 バス発車標</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.board{background:#070707;border-radius:12px;padding:12px;font-family:'Hiragino Kaku Gothic ProN','Meiryo',sans-serif;min-width:320px;max-width:800px;margin:0 auto}
+.hdr{display:flex;align-items:flex-end;justify-content:space-between;padding-bottom:10px;border-bottom:1px solid #1e1e1e;margin-bottom:10px}
+.hdr-title{color:#ffd700;font-size:14px;font-weight:500}
+.hdr-sub{color:#666;font-size:10px;margin-top:3px}
+.clk{color:#ffd700;font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:.06em;text-align:right}
+.clk-d{color:#555;font-size:10px;text-align:right;margin-top:2px}
+
+/* コントロール */
+.ctrl-row{display:flex;gap:6px;margin-bottom:10px;align-items:center;flex-wrap:wrap}
+.tab{font-size:11px;padding:5px 14px;border-radius:20px;cursor:pointer;color:#666;background:#111;border:1px solid #222;transition:all .15s;user-select:none}
+.tab.a-wd{background:#1a1000;color:#fbbf24;border-color:#d97706}
+.tab.a-hd{background:#1a0814;color:#f9a8d4;border-color:#be185d}
+.time-ctrl{display:flex;align-items:center;gap:6px;margin-left:auto}
+.time-label{color:#555;font-size:10px}
+.time-input{background:#111;border:1px solid #2a2a2a;color:#ffd700;font-size:13px;padding:3px 6px;border-radius:6px;font-variant-numeric:tabular-nums;width:72px;text-align:center}
+.time-input:focus{outline:none;border-color:#d97706}
+.btn-now{font-size:10px;padding:3px 8px;border-radius:12px;cursor:pointer;color:#888;background:#111;border:1px solid #2a2a2a}
+.btn-now:hover{color:#ffd700;border-color:#d97706}
+
+/* ネクストカード */
+.next-card{border-radius:10px;padding:14px 16px;margin-bottom:10px;position:relative;overflow:hidden}
+.next-card.c-hospital-line{border:1px solid #0a1f3a;background:#060e1a}
+.next-card.c-ginan{border:1px solid #2a2a00;background:#0e0d00}
+.next-label{font-size:10px;letter-spacing:.08em;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.next-dot{width:6px;height:6px;border-radius:50%;animation:pdot 1.2s ease-in-out infinite}
+@keyframes pdot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.6)}}
+.next-badges{display:flex;gap:5px;align-items:center;margin-bottom:5px;flex-wrap:wrap}
+.next-dest{color:#fff;font-size:22px;font-weight:600;letter-spacing:.02em}
+.next-via{color:#666;font-size:11px;margin-top:4px}
+.next-times{display:grid;gap:8px;margin-top:10px;border-top:1px solid #1a1a1a;padding-top:10px}
+.nti{text-align:center}
+.nti-lbl{color:#555;font-size:9px;letter-spacing:.04em;margin-bottom:2px}
+.nti-val{font-size:18px;font-weight:500;font-variant-numeric:tabular-nums}
+.nti-val.dep{color:#fbbf24}
+.nti-val.arr-m{color:#86efac}
+.nti-val.arr-j{color:#60a5fa}
+.nti-val.dur-v{color:#c084fc}
+.next-cd-row{text-align:right;margin-top:8px}
+.next-cd{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.ncd-g{color:#22c55e}.ncd-y{color:#fbbf24}.ncd-r{color:#ef4444;animation:blink .8s step-end infinite}.ncd-d{color:#333}
+
+/* リスト */
+.col-hdr,.row-item{display:grid;grid-template-columns:38px 36px 1fr 48px 48px 48px 38px 62px 52px;gap:3px;align-items:center;padding:4px 8px}
+.col-hdr{border-bottom:1px solid #1a1a1a;padding-bottom:5px}
+.ch{color:#2e2e2e;font-size:9px}.ch.r{text-align:right}
+.row-item{border-bottom:1px solid #0e0e0e}
+.row-item.gone{opacity:.25}
+.row-item.hl1{background:#171100;border-left:3px solid #fbbf24}
+.row-item.hl2{background:#1a0404;border-left:3px solid #ef4444;animation:pbg 2s ease-in-out infinite}
+@keyframes pbg{0%,100%{background:#1a0404}50%{background:#2a0606}}
+.badge{font-size:10px;font-weight:500;text-align:center;padding:2px 3px;border-radius:4px;line-height:1.5;white-space:nowrap}
+.dest-m{color:#e0e0e0;font-size:12px}
+.dest-s{color:#3a3a3a;font-size:9px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tv{font-size:12px;font-variant-numeric:tabular-nums;text-align:right;color:#bbb}
+.tv-m{font-size:11px;font-variant-numeric:tabular-nums;text-align:right;color:#4ade80}
+.tv-j{font-size:11px;font-variant-numeric:tabular-nums;text-align:right;color:#60a5fa}
+.tv-d{font-size:11px;text-align:right;color:#c084fc}
+.tv-na{font-size:10px;text-align:right;color:#2a2a2a}
+.cd{font-size:11px;font-variant-numeric:tabular-nums;text-align:right;font-weight:500}
+.cd-g{color:#22c55e}.cd-y{color:#fbbf24}.cd-r{color:#ef4444;animation:blink .8s step-end infinite}.cd-d{color:#2a2a2a}
+.st{font-size:9px;text-align:center;padding:2px 4px;border-radius:6px;white-space:nowrap}
+@keyframes blink{50%{opacity:.2}}
+.empty{color:#333;font-size:12px;text-align:center;padding:20px 0}
+.more-btn{color:#3a3a3a;font-size:10px;text-align:center;padding:6px;cursor:pointer;user-select:none}
+.more-btn:hover{color:#666}
+
+/* テロップレスポンシブ化 */
+.ticker-wrap{overflow:hidden;border-top:1px solid #141414;margin-top:8px;padding:5px 0 2px;position:relative;width:100%}
+.ticker{color:#444;font-size:10px;white-space:nowrap;display:inline-block;padding-left:100%;animation:tck 46s linear infinite}
+@keyframes tck{0%{transform:translateX(0%)}100%{transform:translateX(-100%)}}
+
+/* --- スマホ表示・文字化け対策版 追加CSS --- */
+html{background:#070707;-webkit-text-size-adjust:100%;text-size-adjust:100%}
+body{margin:0;background:#070707;padding:8px;font-family:'Hiragino Kaku Gothic ProN','Yu Gothic','Meiryo',sans-serif}
+.board{width:100%;min-width:0;max-width:800px}
+@media (max-width:430px){
+  body{padding:6px}
+  .board{padding:8px;border-radius:10px}
+  .hdr-title{font-size:13px}
+  .hdr-sub{font-size:9px}
+  .clk{font-size:18px}
+  .ctrl-row{gap:5px}
+  .tab{font-size:10px;padding:5px 10px}
+  .time-ctrl{margin-left:0;width:100%;justify-content:flex-end}
+  .next-card{padding:12px;margin-bottom:8px}
+  .next-dest{font-size:19px}
+  .next-times{grid-template-columns:repeat(2,1fr)!important;gap:7px}
+  .next-cd{font-size:24px}
+  .col-hdr,.row-item{
+    grid-template-columns:30px 28px minmax(55px,1fr) 42px 42px 30px 48px;
+    gap:3px;
+    padding:4px 5px;
+  }
+  /* 狭い画面では「名鉄着」と「状態」を非表示。JR着・あと時間を優先表示 */
+  .col-hdr span:nth-child(5), .col-hdr span:nth-child(9),
+  .row-item > div:nth-child(5), .row-item > div:nth-child(9){display:none}
+  .ch{font-size:8px}
+  .badge{font-size:8px!important;padding:1px 2px}
+  .dest-m{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dest-s{font-size:8px}
+  .tv,.tv-j,.tv-d,.cd{font-size:10px}
+  .ticker{font-size:9px}
+}
+
+</style>
+</head>
+<body>
+<div class="board">
+  <div class="hdr">
+    <div>
+      <div class="hdr-title">🚌 岐阜大学 バス停</div>
+      <div class="hdr-sub">🚉 ＪＲ岐阜・岐南方面 発車標</div>
+    </div>
+    <div>
+      <div class="clk" id="clk">--:--:--</div>
+      <div class="clk-d" id="clk-d"></div>
+    </div>
+  </div>
+
+  <div class="ctrl-row">
+    <div class="tab a-wd" id="t-wd" onclick="setDay('wd')">平日</div>
+    <div class="tab"      id="t-hd" onclick="setDay('hd')">土日祝</div>
+    <div class="time-ctrl">
+      <span class="time-label">時刻</span>
+      <input class="time-input" id="time-input" type="time" value="" onchange="onTimeChange()">
+      <button class="btn-now" onclick="resetTime()">現在時刻</button>
+    </div>
+  </div>
+
+  <div id="next-card"></div>
+  <div class="col-hdr">
+    <span class="ch">路線</span><span class="ch">種別</span><span class="ch">行先</span>
+    <span class="ch r">発車</span><span class="ch r">名鉄着</span><span class="ch r">ＪＲ着</span>
+    <span class="ch r">所要</span><span class="ch r">あと</span><span class="ch r">状態</span>
+  </div>
+  <div id="rows"></div>
+  <div class="ticker-wrap">
+    <span class="ticker">岐阜大学バス停 ＪＲ岐阜・岐南方面　病院線（2025年10月1日改正）清：清流ライナー（名鉄岐阜通過） 普：普通　岐南町線（2026年4月1日改正）　▲学休日運休　☆学休日運転　到着時刻・所要時間はExcelデータより修正済</span>
+  </div>
+</div>
+
+<script>
+// データの修正（並び順を発車時刻順に整理、壊れていた岐南線の所要時間と清流ライナーの名鉄通過バグを修正）
+const TIMETABLE = {
+  "wd": [
+    {"line":"病院線","type":"普","dep":[6,48],"m":[7,11],"jr":[7,15],"dur":27},
+    {"line":"岐南線","type":"普","dep":[6,49],"m":[7,22],"jr":[7,26],"dur":37},
+    {"line":"病院線","type":"▲清","dep":[7,0],"m":null,"jr":[7,29],"dur":29},
+    {"line":"岐南線","type":"普","dep":[7,7],"m":[7,41],"jr":[7,45],"dur":38},
+    {"line":"病院線","type":"普","dep":[7,13],"m":[7,37],"jr":[7,41],"dur":28},
+    {"line":"岐南線","type":"普","dep":[7,22],"m":[7,56],"jr":[8,0],"dur":38},
+    {"line":"病院線","type":"普","dep":[7,33],"m":[8,0],"jr":[8,4],"dur":31},
+    {"line":"岐南線","type":"普","dep":[7,41],"m":[8,17],"jr":[8,21],"dur":40},
+    {"line":"病院線","type":"普","dep":[8,3],"m":[8,30],"jr":[8,34],"dur":31},
+    {"line":"岐南線","type":"普","dep":[8,21],"m":[8,56],"jr":[8,58],"dur":37},
+    {"line":"病院線","type":"普","dep":[8,23],"m":[8,47],"jr":[8,51],"dur":28},
+    {"line":"岐南線","type":"普","dep":[8,41],"m":[8,56],"jr":[8,58],"dur":17},
+    {"line":"病院線","type":"普","dep":[8,43],"m":[9,7],"jr":[9,10],"dur":27},
+    {"line":"病院線","type":"清","dep":[8,53],"m":null,"jr":[9,20],"dur":27},
+    {"line":"岐南線","type":"普","dep":[9,1],"m":[9,33],"jr":[9,35],"dur":34},
+    {"line":"病院線","type":"普","dep":[9,3],"m":[9,26],"jr":[9,29],"dur":26},
+    {"line":"病院線","type":"▲清","dep":[9,13],"m":null,"jr":[9,40],"dur":27},
+    {"line":"病院線","type":"普","dep":[9,23],"m":[9,46],"jr":[9,49],"dur":26},
+    {"line":"岐南線","type":"普","dep":[9,26],"m":[9,58],"jr":[10,0],"dur":34},
+    {"line":"病院線","type":"普","dep":[9,43],"m":[10,6],"jr":[10,9],"dur":26},
+    {"line":"岐南線","type":"普","dep":[9,56],"m":[10,28],"jr":[10,30],"dur":34},
+    {"line":"病院線","type":"普","dep":[10,3],"m":[10,26],"jr":[10,29],"dur":26},
+    {"line":"病院線","type":"▲清","dep":[10,13],"m":null,"jr":[10,40],"dur":27},
+    {"line":"病院線","type":"普","dep":[10,23],"m":[10,46],"jr":[10,49],"dur":26},
+    {"line":"岐南線","type":"普","dep":[10,26],"m":[10,58],"jr":[11,0],"dur":34},
+    {"line":"病院線","type":"普","dep":[10,43],"m":[11,6],"jr":[11,9],"dur":26},
+    {"line":"岐南線","type":"普","dep":[10,57],"m":[11,29],"jr":[11,31],"dur":34},
+    {"line":"病院線","type":"普","dep":[11,3],"m":[11,26],"jr":[11,29],"dur":26},
+    {"line":"病院線","type":"普","dep":[11,23],"m":[11,46],"jr":[11,49],"dur":26},
+    {"line":"病院線","type":"普","dep":[11,43],"m":[12,6],"jr":[12,9],"dur":26},
+    {"line":"病院線","type":"普","dep":[12,3],"m":[12,26],"jr":[12,29],"dur":26},
+    {"line":"岐南線","type":"普","dep":[12,4],"m":[12,36],"jr":[12,38],"dur":34},
+    {"line":"病院線","type":"▲清","dep":[12,13],"m":null,"jr":[12,40],"dur":27},
+    {"line":"病院線","type":"普","dep":[12,23],"m":[12,46],"jr":[12,49],"dur":26},
+    {"line":"病院線","type":"清","dep":[12,33],"m":null,"jr":[13,0],"dur":27},
+    {"line":"病院線","type":"普","dep":[12,43],"m":[13,6],"jr":[13,9],"dur":26},
+    {"line":"岐南線","type":"普","dep":[12,41],"m":[13,13],"jr":[13,15],"dur":34},
+    {"line":"病院線","type":"清","dep":[12,53],"m":null,"jr":[13,20],"dur":27},
+    {"line":"病院線","type":"普","dep":[13,3],"m":[13,26],"jr":[13,29],"dur":26},
+    {"line":"病院線","type":"普","dep":[13,23],"m":[13,46],"jr":[13,49],"dur":26},
+    {"line":"岐南線","type":"普","dep":[13,31],"m":[14,3],"jr":[14,5],"dur":34},
+    {"line":"病院線","type":"☆清","dep":[13,33],"m":null,"jr":[14,0],"dur":27},
+    {"line":"病院線","type":"普","dep":[13,43],"m":[14,6],"jr":[14,9],"dur":26},
+    {"line":"病院線","type":"普","dep":[14,3],"m":[14,26],"jr":[14,29],"dur":26},
+    {"line":"岐南線","type":"普","dep":[14,16],"m":[14,48],"jr":[14,50],"dur":34},
+    {"line":"病院線","type":"普","dep":[14,23],"m":[14,46],"jr":[14,49],"dur":26},
+    {"line":"病院線","type":"普","dep":[14,38],"m":[15,1],"jr":[15,4],"dur":26},
+    {"line":"岐南線","type":"普","dep":[14,46],"m":[15,18],"jr":[15,20],"dur":34},
+    {"line":"病院線","type":"▲清","dep":[14,48],"m":null,"jr":[15,15],"dur":26},
+    {"line":"病院線","type":"普","dep":[14,58],"m":[15,21],"jr":[15,24],"dur":26},
+    {"line":"病院線","type":"清","dep":[15,8],"m":null,"jr":[15,35],"dur":26},
+    {"line":"岐南線","type":"普","dep":[15,11],"m":[15,44],"jr":[15,46],"dur":35},
+    {"line":"病院線","type":"普","dep":[15,18],"m":[15,42],"jr":[15,45],"dur":27},
+    {"line":"病院線","type":"普","dep":[15,38],"m":[16,2],"jr":[16,5],"dur":27},
+    {"line":"岐南線","type":"普","dep":[15,52],"m":[16,26],"jr":[16,28],"dur":36},
+    {"line":"病院線","type":"普","dep":[15,58],"m":[16,22],"jr":[16,25],"dur":27},
+    {"line":"病院線","type":"清","dep":[16,8],"m":null,"jr":[16,36],"dur":28},
+    {"line":"岐南線","type":"普","dep":[16,11],"m":[16,46],"jr":[16,48],"dur":37},
+    {"line":"病院線","type":"普","dep":[16,18],"m":[16,42],"jr":[16,45],"dur":27},
+    {"line":"病院線","type":"▲清","dep":[16,28],"m":null,"jr":[16,56],"dur":27},
+    {"line":"病院線","type":"普","dep":[16,33],"m":[16,58],"jr":[17,1],"dur":28},
+    {"line":"病院線","type":"▲清","dep":[16,38],"m":null,"jr":[17,6],"dur":28},
+    {"line":"病院線","type":"▲清","dep":[16,48],"m":null,"jr":[17,17],"dur":29},
+    {"line":"岐南線","type":"普","dep":[16,50],"m":[17,28],"jr":[17,32],"dur":42},
+    {"line":"病院線","type":"普","dep":[16,58],"m":[17,24],"jr":[17,28],"dur":30},
+    {"line":"病院線","type":"普","dep":[17,13],"m":[17,42],"jr":[17,46],"dur":33},
+    {"line":"岐南線","type":"普","dep":[17,25],"m":[17,58],"jr":[18,2],"dur":37},
+    {"line":"病院線","type":"普","dep":[17,28],"m":[17,57],"jr":[18,1],"dur":33},
+    {"line":"病院線","type":"普","dep":[17,38],"m":[18,7],"jr":[18,11],"dur":33},
+    {"line":"岐南線","type":"普","dep":[17,45],"m":[18,20],"jr":[18,24],"dur":39},
+    {"line":"病院線","type":"普","dep":[17,48],"m":[18,16],"jr":[18,20],"dur":32},
+    {"line":"病院線","type":"普","dep":[17,58],"m":[18,26],"jr":[18,30],"dur":32},
+    {"line":"病院線","type":"▲清","dep":[18,8],"m":null,"jr":[18,38],"dur":30},
+    {"line":"病院線","type":"普","dep":[18,18],"m":[18,45],"jr":[18,49],"dur":31},
+    {"line":"病院線","type":"▲清","dep":[18,23],"m":null,"jr":[18,52],"dur":29},
+    {"line":"岐南線","type":"普","dep":[18,26],"m":[19,2],"jr":[19,6],"dur":40},
+    {"line":"病院線","type":"▲清","dep":[18,33],"m":null,"jr":[19,1],"dur":28},
+    {"line":"病院線","type":"普","dep":[18,43],"m":[19,7],"jr":[19,10],"dur":27},
+    {"line":"岐南線","type":"普","dep":[18,52],"m":[19,24],"jr":[19,26],"dur":34},
+    {"line":"病院線","type":"普","dep":[18,58],"m":[19,21],"jr":[19,24],"dur":26},
+    {"line":"病院線","type":"普","dep":[19,13],"m":[19,36],"jr":[19,39],"dur":26},
+    {"line":"病院線","type":"普","dep":[19,28],"m":[19,51],"jr":[19,54],"dur":26},
+    {"line":"岐南線","type":"普","dep":[19,41],"m":[20,12],"jr":[20,14],"dur":33},
+    {"line":"病院線","type":"普","dep":[19,43],"m":[20,6],"jr":[20,9],"dur":26},
+    {"line":"病院線","type":"普","dep":[20,3],"m":[20,26],"jr":[20,29],"dur":26},
+    {"line":"病院線","type":"普","dep":[20,28],"m":[20,51],"jr":[20,54],"dur":26},
+    {"line":"病院線","type":"普","dep":[21,43],"m":[22,4],"jr":[22,7],"dur":24}
+  ],
+  "hd": [
+    {"line":"病院線","type":"普","dep":[6,37],"m":[6,59],"jr":[7,2],"dur":25},
+    {"line":"病院線","type":"普","dep":[7,7],"m":[7,29],"jr":[7,32],"dur":25},
+    {"line":"岐南線","type":"普","dep":[7,30],"m":[8,2],"jr":[8,4],"dur":34},
+    {"line":"病院線","type":"普","dep":[7,37],"m":[7,59],"jr":[8,3],"dur":26},
+    {"line":"病院線","type":"普","dep":[7,57],"m":[8,20],"jr":[8,24],"dur":27},
+    {"line":"岐南線","type":"普","dep":[8,5],"m":[8,37],"jr":[8,39],"dur":34},
+    {"line":"病院線","type":"普","dep":[8,17],"m":[8,40],"jr":[8,43],"dur":26},
+    {"line":"病院線","type":"普","dep":[8,37],"m":[9,0],"jr":[9,3],"dur":26},
+    {"line":"岐南線","type":"普","dep":[8,40],"m":[9,13],"jr":[9,15],"dur":35},
+    {"line":"病院線","type":"普","dep":[8,57],"m":[9,20],"jr":[9,23],"dur":26},
+    {"line":"病院線","type":"普","dep":[9,17],"m":[9,40],"jr":[9,43],"dur":26},
+    {"line":"岐南線","type":"普","dep":[9,20],"m":[9,53],"jr":[9,55],"dur":35},
+    {"line":"病院線","type":"普","dep":[9,37],"m":[10,0],"jr":[10,3],"dur":26},
+    {"line":"病院線","type":"普","dep":[9,57],"m":[10,20],"jr":[10,23],"dur":26},
+    {"line":"岐南線","type":"普","dep":[10,10],"m":[10,43],"jr":[10,45],"dur":35},
+    {"line":"病院線","type":"普","dep":[10,22],"m":[10,45],"jr":[10,48],"dur":26},
+    {"line":"病院線","type":"普","dep":[10,47],"m":[11,10],"jr":[11,13],"dur":26},
+    {"line":"岐南線","type":"普","dep":[11,0],"m":[11,33],"jr":[11,35],"dur":35},
+    {"line":"病院線","type":"普","dep":[11,7],"m":[11,30],"jr":[11,33],"dur":26},
+    {"line":"病院線","type":"普","dep":[11,27],"m":[11,50],"jr":[11,53],"dur":26},
+    {"line":"病院線","type":"普","dep":[11,47],"m":[12,10],"jr":[12,13],"dur":26},
+    {"line":"岐南線","type":"普","dep":[12,0],"m":[12,33],"jr":[12,35],"dur":35},
+    {"line":"病院線","type":"普","dep":[12,7],"m":[12,30],"jr":[12,33],"dur":26},
+    {"line":"病院線","type":"普","dep":[12,27],"m":[12,50],"jr":[12,53],"dur":26},
+    {"line":"病院線","type":"普","dep":[12,52],"m":[13,15],"jr":[13,18],"dur":26},
+    {"line":"岐南線","type":"普","dep":[13,0],"m":[13,33],"jr":[13,35],"dur":35},
+    {"line":"病院線","type":"普","dep":[13,17],"m":[13,40],"jr":[13,43],"dur":26},
+    {"line":"病院線","type":"普","dep":[13,42],"m":[14,5],"jr":[14,8],"dur":26},
+    {"line":"岐南線","type":"普","dep":[13,57],"m":[14,30],"jr":[14,32],"dur":35},
+    {"line":"病院線","type":"普","dep":[14,7],"m":[14,31],"jr":[14,34],"dur":27},
+    {"line":"病院線","type":"普","dep":[14,32],"m":[14,56],"jr":[14,59],"dur":27},
+    {"line":"岐南線","type":"普","dep":[14,47],"m":[15,20],"jr":[15,22],"dur":35},
+    {"line":"病院線","type":"普","dep":[14,57],"m":[15,21],"jr":[15,24],"dur":27},
+    {"line":"病院線","type":"普","dep":[15,22],"m":[15,46],"jr":[15,49],"dur":27},
+    {"line":"岐南線","type":"普","dep":[15,37],"m":[16,10],"jr":[16,12],"dur":35},
+    {"line":"病院線","type":"普","dep":[15,47],"m":[16,11],"jr":[16,14],"dur":27},
+    {"line":"病院線","type":"普","dep":[16,12],"m":[16,37],"jr":[16,40],"dur":28},
+    {"line":"岐南線","type":"普","dep":[16,27],"m":[17,0],"jr":[17,2],"dur":35},
+    {"line":"病院線","type":"普","dep":[16,32],"m":[16,57],"jr":[17,0],"dur":28},
+    {"line":"病院線","type":"普","dep":[16,52],"m":[17,17],"jr":[17,20],"dur":28},
+    {"line":"岐南線","type":"普","dep":[17,16],"m":[17,49],"jr":[17,51],"dur":35},
+    {"line":"病院線","type":"普","dep":[17,12],"m":[17,37],"jr":[17,40],"dur":28},
+    {"line":"病院線","type":"普","dep":[17,32],"m":[17,57],"jr":[18,0],"dur":28},
+    {"line":"病院線","type":"普","dep":[17,52],"m":[18,17],"jr":[18,20],"dur":28},
+    {"line":"岐南線","type":"普","dep":[18,7],"m":[18,40],"jr":[18,42],"dur":35},
+    {"line":"病院線","type":"普","dep":[18,17],"m":[18,41],"jr":[18,44],"dur":27},
+    {"line":"病院線","type":"普","dep":[18,42],"m":[19,4],"jr":[19,7],"dur":25},
+    {"line":"岐南線","type":"普","dep":[18,57],"m":[19,30],"jr":[19,32],"dur":35},
+    {"line":"病院線","type":"普","dep":[19,7],"m":[19,29],"jr":[19,32],"dur":25},
+    {"line":"病院線","type":"普","dep":[19,32],"m":[19,54],"jr":[19,57],"dur":25},
+    {"line":"病院線","type":"普","dep":[20,32],"m":[20,54],"jr":[20,57],"dur":25},
+    {"line":"病院線","type":"普","dep":[21,32],"m":[21,53],"jr":[21,56],"dur":24}
+  ]
+};
+
+const LINE_STYLES = {
+  '病院線': {bg: '#0a1828', tc: '#60a5fa', cardClass: 'c-hospital-line'},
+  '岐南線': {bg: '#1a1000', tc: '#fbbf24', cardClass: 'c-ginan'}
+};
+
+const TYPE_STYLES = {
+  '普': {bg: '#111827', tc: '#94a3b8'},
+  '清': {bg: '#0d2a1a', tc: '#4ade80'}
+};
+
+function getTypeStyle(type) {
+  return type && type.includes('清') ? TYPE_STYLES['清'] : TYPE_STYLES['普'];
+}
+
+function isRapid(type) {
+  return type && type.includes('清');
+}
+
+function getLabel(type) {
+  return type || '普';
+}
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function fmt(hm) { return hm ? `${pad(hm[0])}:${pad(hm[1])}` : '—'; }
+
+let currentDayMode = 'wd';
+let showAllElements = false;
+let customTotalMinutes = null; // null = リアルタイム現在時刻
+
+// 秒単位の「擬似現在時刻」を取得（カスタム入力時はリアルタイムでカウントダウンするように修正）
+function getNowSeconds() {
+  if (customTotalMinutes !== null) {
+    const now = new Date();
+    // 画面を開いてからの「秒」を維持しつつ、カスタム時刻の基準に合わせる
+    return customTotalMinutes * 60 + (now.getSeconds() % 60);
+  }
+  const now = new Date();
+  return now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+}
+
+function setDay(d) {
+  currentDayMode = d;
+  showAllElements = false;
+  document.getElementById('t-wd').className = 'tab' + (d === 'wd' ? ' a-wd' : '');
+  document.getElementById('t-hd').className = 'tab' + (d === 'hd' ? ' a-hd' : '');
+  render();
+}
+
+function onTimeChange() {
+  const value = document.getElementById('time-input').value;
+  if (!value) {
+    customTotalMinutes = null;
+  } else {
+    const [h, m] = value.split(':').map(Number);
+    customTotalMinutes = h * 60 + m;
+  }
+  showAllElements = false;
+  render();
+}
+
+function resetTime() {
+  customTotalMinutes = null;
+  const now = new Date();
+  document.getElementById('time-input').value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  showAllElements = false;
+  render();
+}
+
+function getItems() {
+  const currentSec = getNowSeconds();
+  
+  return TIMETABLE[currentDayMode]
+    .map(row => {
+      let busDepSec = row.dep[0] * 3600 + row.dep[1] * 60;
+      let diff = busDepSec - currentSec;
+      
+      // 【深夜対応】日付跨ぎ（現在23時台、始発6時台など）の時は翌日として24時間加算
+      if (diff < -43200) { 
+        diff += 24 * 3600;
+      } else if (diff > 43200) {
+        diff -= 24 * 3600;
+      }
+      
+      return {
+        ...row,
+        diff: diff,
+        jrMin: row.jr[0] * 60 + row.jr[1]
+      };
+    })
+    // すでに発車して2分（120秒）以上経ったバスは除外
+    .filter(row => row.diff > -120)
+    // 早く発車する順番に並び替え
+    .sort((a, b) => a.diff - b.diff);
+}
+
+function render() {
+  const items = getItems();
+  const nextBus = items[0];
+
+  // NEXT CARD
+  const nextCardContainer = document.getElementById('next-card');
+  if (!nextBus) {
+    nextCardContainer.innerHTML = '<div style="border:1px solid #1a1a1a;border-radius:10px;text-align:center;color:#333;padding:20px;margin-bottom:10px">本日の運行は終了しました</div>';
+    document.getElementById('rows').innerHTML = '';
+    return;
+  }
+
+  const rapidFlag = isRapid(nextBus.type);
+  const lineStyle = LINE_STYLES[nextBus.line];
+  const typeStyle = getTypeStyle(nextBus.type);
+  
+  let countdownText, countdownClass;
+  if (nextBus.diff < 0) {
+    countdownText = '発車済'; countdownClass = 'ncd-g';
+  } else if (nextBus.diff < 60) {
+    countdownText = `${nextBus.diff}秒`; countdownClass = 'ncd-r';
+  } else if (nextBus.diff < 300) {
+    countdownText = `${Math.floor(nextBus.diff / 60)}分${nextBus.diff % 60}秒`; countdownClass = 'ncd-y';
+  } else {
+    countdownText = `${Math.floor(nextBus.diff / 60)}分`; countdownClass = 'ncd-g';
+  }
+
+  const hasMeitetsu = nextBus.m !== null;
+  const gridColumns = hasMeitetsu ? 4 : 3;
+  const destinationText = nextBus.line === '岐南線' ? 'ＪＲ岐阜・岐南方面' : 'ＪＲ岐阜';
+  const viaText = nextBus.line === '岐南線' ? '加納駅前・ＪＲ岐阜経由' : (rapidFlag ? '清流ライナー（名鉄岐阜通過）' : '徹明町・忠節経由');
+  const meitetsuHtml = hasMeitetsu ? `<div class="nti"><div class="nti-lbl">名鉄岐阜 着</div><div class="nti-val arr-m">${fmt(nextBus.m)}</div></div>` : '';
+  const durationHtml = nextBus.dur ? `<div class="nti"><div class="nti-lbl">所要時間</div><div class="nti-val dur-v">${nextBus.dur}分</div></div>` : '';
+
+  nextCardContainer.innerHTML = `
+    <div class="next-card ${lineStyle.cardClass}">
+      <div class="next-label" style="color:${lineStyle.tc}"><span class="next-dot" style="background:${lineStyle.tc}"></span>次の便</div>
+      <div class="next-badges">
+        <span class="badge" style="background:${lineStyle.bg};color:${lineStyle.tc};font-size:11px">${nextBus.line}</span>
+        <span class="badge" style="background:${typeStyle.bg};color:${typeStyle.tc};font-size:11px">${getLabel(nextBus.type)}</span>
+        ${rapidFlag ? `<span style="color:#4ade80;font-size:10px">★清流ライナー（名鉄岐阜 通過）</span>` : ''}
+      </div>
+      <div class="next-dest">${destinationText}</div>
+      <div class="next-via">${viaText}</div>
+      <div class="next-times" style="grid-template-columns:repeat(${gridColumns},1fr)">
+        <div class="nti"><div class="nti-lbl">発車時刻</div><div class="nti-val dep">${fmt(nextBus.dep)}</div></div>
+        ${meitetsuHtml}
+        <div class="nti"><div class="nti-lbl">ＪＲ岐阜 着</div><div class="nti-val arr-j">${fmt(nextBus.jr)}</div></div>
+        ${durationHtml}
+      </div>
+      <div class="next-cd-row"><span class="next-cd ${countdownClass}">${countdownText}</span></div>
+    </div>`;
+
+  // LIST
+  const restBuses = items.slice(1);
+  const visibleBuses = showAllElements ? restBuses.slice(0, 16) : restBuses.slice(0, 7);
+  const hasMoreBuses = restBuses.length > 7 && !showAllElements;
+  const listContainer = document.getElementById('rows');
+  
+  if (!restBuses.length) {
+    listContainer.innerHTML = '';
+    return;
+  }
+
+  let rowsHtml = visibleBuses.map(bus => {
+    const lineStyle2 = LINE_STYLES[bus.line];
+    const typeStyle2 = getTypeStyle(bus.type);
+    let rowClass = 'row-item', remainingText, colorClass, statusBadge;
+    
+    if (bus.diff < 0) {
+      rowClass += ' gone'; remainingText = '発車済'; colorClass = 'cd-d';
+      statusBadge = `<span class="st" style="background:#141414;color:#2a2a2a">済</span>`;
+    } else if (bus.diff < 60) {
+      rowClass += ' hl2'; remainingText = `${bus.diff}秒`; colorClass = 'cd-r';
+      statusBadge = `<span class="st" style="background:#3a0808;color:#ef4444">まもなく</span>`;
+    } else if (bus.diff < 300) {
+      rowClass += ' hl1'; 
+      const min = Math.floor(bus.diff / 60), sec = bus.diff % 60;
+      remainingText = `${min}分${sec}秒`; colorClass = 'cd-y';
+      statusBadge = `<span class="st" style="background:#1e1600;color:#fbbf24">${min}分後</span>`;
+    } else {
+      remainingText = `${Math.floor(bus.diff / 60)}分`; colorClass = 'cd-g';
+      statusBadge = `<span class="st" style="background:${lineStyle2.bg};color:${lineStyle2.tc}">定刻</span>`;
+    }
+    
+    const displayDest = bus.line === '岐南線' ? 'ＪＲ岐阜・岐南' : (bus.line === '病院線' && isRapid(bus.type) ? 'ＪＲ岐阜(快)' : 'ＪＲ岐阜');
+    const meitetsuTd = isRapid(bus.type)
+      ? `<div class="tv-na" style="font-size:9px;color:#1a3a1a">通過</div>`
+      : (bus.m ? `<div class="tv-m">${fmt(bus.m)}</div>` : `<div class="tv-na">—</div>`);
+    const durationTd = bus.dur ? `<div class="tv-d">${bus.dur}分</div>` : `<div class="tv-na">—</div>`;
+    
+    return `<div class="${rowClass}">
+      <div><span class="badge" style="background:${lineStyle2.bg};color:${lineStyle2.tc};font-size:9px">${bus.line === '岐南線' ? '岐南' : '病院'}</span></div>
+      <div><span class="badge" style="background:${typeStyle2.bg};color:${typeStyle2.tc};font-size:9px">${getLabel(bus.type)}</span></div>
+      <div><div class="dest-m">${displayDest}</div><div class="dest-s">${bus.line === '岐南線' ? '加納駅前経由' : (isRapid(bus.type) ? '清流ライナー' : '徹明町・忠節')}</div></div>
+      <div class="tv">${fmt(bus.dep)}</div>
+      ${meitetsuTd}
+      <div class="tv-j">${fmt(bus.jr)}</div>
+      ${durationTd}
+      <div class="cd ${colorClass}">${remainingText}</div>
+      <div>${statusBadge}</div>
+    </div>`;
+  }).join('');
+  
+  if (hasMoreBuses) {
+    rowsHtml += `<div class="more-btn" onclick="showAllElements=true;render()">▼ 以降 ${restBuses.length - 7} 便を表示</div>`;
+  }
+  listContainer.innerHTML = rowsHtml;
+}
+
+function tick() {
+  const now = new Date();
+  document.getElementById('clk').textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const days = ['日','月','火','水','木','金','土'];
+  document.getElementById('clk-d').textContent = `${now.getFullYear()}/${now.getMonth()+1}/${now.getDate()}（${days[now.getDay()]}）`;
+  
+  // 1秒ごとの更新。自動更新でもカスタム表示が消えないように修正
+  render();
+}
+
+// 初期化
+const initDate = new Date();
+document.getElementById('time-input').value = `${pad(initDate.getHours())}:${pad(initDate.getMinutes())}`;
+// 現在の曜日（土日なら自動で土日祝タブを選択）
+if (initDate.getDay() === 0 || initDate.getDay() === 6) {
+  setDay('hd');
+} else {
+  setDay('wd');
+}
+
+tick();
+setInterval(tick, 1000);
+</script>
+</body>
+</html>
